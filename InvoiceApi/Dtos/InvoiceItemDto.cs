@@ -17,6 +17,7 @@ namespace InvoiceApi.Dtos
         public int Quantity { get; set; }
         [Range(0.01,double.MaxValue)]
         public decimal UnitPrice { get; set; }
+
         public decimal TotalPrice => Quantity * UnitPrice;
     }
 }
