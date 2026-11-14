@@ -10,7 +10,7 @@ namespace InvoiceApi.Models
         [MaxLength(50)]
         public string UserName { get; set; }
         [Required]
-        [MaxLength(50)]
+        [MaxLength(60)]
         public string Password { get; set; }
 
     }
