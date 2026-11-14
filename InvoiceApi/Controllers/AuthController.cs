@@ -4,49 +4,55 @@ using InvoiceApi.Helpers;
 using InvoiceApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
 using System.Threading.Tasks;
+using InvoiceApi.Services;
 
 namespace InvoiceApi.Controllers
 {
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly AppDbContext _appDbContext;
-        public AuthController(AppDbContext appDbContext)
+        private readonly IAuthService _authService;
+        public AuthController(IAuthService authService)
         {
-            _appDbContext = appDbContext;
+            _authService = authService;
         }
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
-            var user = await _appDbContext.Users.FirstOrDefaultAsync(u => u.UserName == dto.UserName
-                                                         && u.Password == dto.Password);
-            if (user == null)
+            var user = await _authService.Login(dto);
+            if (!user.IsSuccess)
                 return Unauthorized();
-            var token = JwtHelper.GenerateToken(user.UserName, user.Id);
 
-            return Ok(new { token });
+
+            return Ok(new
+            {
+                message = user.Message,
+                token = user.Token
+            });
         }
+
         [HttpPost("register")]
 
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            var UserExists = await _appDbContext.Users.AnyAsync(u => u.UserName == dto.UserName);
 
-            if (UserExists)
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var registerResult = await _authService.Register(dto);
+
+            if (!registerResult.IsSuccess)
             {
-                return BadRequest("User already exists!");
+                return BadRequest(new
+                {
+                    message = registerResult.Message
+                });
             }
-            var user = new User
-            {
-                UserName = dto.UserName,
-                Password = dto.Password
-            };
 
-            _appDbContext.Users.Add(user);
-            await _appDbContext.SaveChangesAsync();
-            return Ok(new { message = "User Create!" });
+            return Ok(new
+            {
+                message = registerResult.Message,
+            });
 
         }
 
