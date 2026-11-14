@@ -31,6 +31,10 @@ namespace InvoiceApi
             services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
             services.AddScoped<IAuthService, AuthService>();
 
+
+
+            services.AddSwaggerGen();
+
             services.AddHttpContextAccessor();
             services.AddControllers();
         }
@@ -41,6 +45,8 @@ namespace InvoiceApi
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseSwagger();
+                app.UseSwaggerUI();
             }
 
             app.UseHttpsRedirection();
