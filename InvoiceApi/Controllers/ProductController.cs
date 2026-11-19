@@ -1,5 +1,4 @@
 ﻿using InvoiceApi.Dtos;
-using InvoiceApi.Filters;
 using InvoiceApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
@@ -8,7 +7,6 @@ namespace InvoiceApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [MyAuthorize]
     public class ProductController : ControllerBase
     {
         private readonly IProductService _service;
@@ -43,9 +41,9 @@ namespace InvoiceApi.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id,[FromBody] CreateProductDto dto)
+        public async Task<IActionResult> Update(int id, [FromBody] CreateProductDto dto)
         {
-            var result= await _service.UpdateAsync(id, dto);
+            var result = await _service.UpdateAsync(id, dto);
             if (result == null)
                 return NotFound();
             return NoContent();
@@ -54,7 +52,7 @@ namespace InvoiceApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var result= await _service.DeleteAsync(id);
+            var result = await _service.DeleteAsync(id);
             if (result == null)
                 return NotFound();
             return NoContent();

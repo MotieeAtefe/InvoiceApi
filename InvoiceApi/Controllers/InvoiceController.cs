@@ -1,5 +1,4 @@
 ﻿using InvoiceApi.Dtos;
-using InvoiceApi.Filters;
 using InvoiceApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +8,6 @@ using System.Threading.Tasks;
 namespace InvoiceApi.Controllers
 {
     [ApiController]
-    [MyAuthorize]
     [Route("api/[controller]")]
     public class InvoiceController : ControllerBase
     {

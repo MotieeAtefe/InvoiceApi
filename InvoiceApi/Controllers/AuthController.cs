@@ -1,9 +1,5 @@
-﻿using InvoiceApi.Data;
-using InvoiceApi.Dtos;
-using InvoiceApi.Helpers;
-using InvoiceApi.Models;
+﻿using InvoiceApi.Dtos;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using InvoiceApi.Services;
 
