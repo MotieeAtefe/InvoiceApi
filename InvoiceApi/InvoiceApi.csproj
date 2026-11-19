@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <UserSecretsId>f332d1f0-d86d-4372-a83f-d7a1e6b94674</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,6 +17,11 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.8.0" />
 
 
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Filters\" />
+    <Folder Include="Helpers\" />
   </ItemGroup>
 
 </Project>

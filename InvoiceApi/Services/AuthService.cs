@@ -1,6 +1,5 @@
 ﻿using InvoiceApi.Data;
 using InvoiceApi.Dtos;
-using InvoiceApi.Helpers;
 using InvoiceApi.Models;
 using InvoiceApi.Results;
 using Microsoft.EntityFrameworkCore;
@@ -13,10 +12,12 @@ namespace InvoiceApi.Services
     {
         private readonly AppDbContext _appDbContext;
         private readonly IPasswordHasher _passwordHasher;
-        public AuthService(AppDbContext appDbContext, IPasswordHasher passwordHasher)
+        private readonly ITokenService _tokenService;
+        public AuthService(AppDbContext appDbContext, IPasswordHasher passwordHasher, ITokenService tokenService)
         {
             _appDbContext = appDbContext;
             _passwordHasher = passwordHasher;
+            _tokenService = tokenService;
         }
         public async Task<LoginResult> Login(LoginDto dto)
         {
@@ -29,12 +30,12 @@ namespace InvoiceApi.Services
                     Message = "نام کاربری وجود ندارد",
                     Token = null
                 };
-            
-            var resultVerifyPassword = _passwordHasher.VerifyPassword(dto.Password ,user.Password);
+
+            var resultVerifyPassword = _passwordHasher.VerifyPassword(dto.Password, user.Password);
 
             if (resultVerifyPassword == true)
             {
-                var token = JwtHelper.GenerateToken(user.UserName, user.Id);
+                var token = _tokenService.GenerateToken(user.UserName, user.Id);
                 return new LoginResult
                 {
                     IsSuccess = true,
@@ -43,17 +44,17 @@ namespace InvoiceApi.Services
                 };
             }
 
-                return new LoginResult
-                {
-                    IsSuccess = false,
-                    Message = "رمز عبور اشتباه است! مجدد امتحان کنید.",
-                    Token = null
-                };
-            
-               
+            return new LoginResult
+            {
+                IsSuccess = false,
+                Message = "رمز عبور اشتباه است! مجدد امتحان کنید.",
+                Token = null
+            };
 
-            
-          
+
+
+
+
         }
 
         public async Task<RegisterResult> Register(RegisterDto dto)
@@ -69,23 +70,23 @@ namespace InvoiceApi.Services
                     Message = $"کاربر با {dto.UserName} نام وجود دارد این"
                 };
             }
-         
-                var user = new User
-                {
-                    UserName = dto.UserName,
-                    Password = _passwordHasher.HashPassword(dto.Password)
-                };
-                _appDbContext.Users.Add(user);
-                await _appDbContext.SaveChangesAsync();
-                return new RegisterResult
-                {
-                    IsSuccess = true,
-                    Message = "حساب کاربری با موفقیت ایجاد شد!"
-                };
 
-            
+            var user = new User
+            {
+                UserName = dto.UserName,
+                Password = _passwordHasher.HashPassword(dto.Password)
+            };
+            _appDbContext.Users.Add(user);
+            await _appDbContext.SaveChangesAsync();
+            return new RegisterResult
+            {
+                IsSuccess = true,
+                Message = "حساب کاربری با موفقیت ایجاد شد!"
+            };
 
-           
+
+
+
         }
     }
 }

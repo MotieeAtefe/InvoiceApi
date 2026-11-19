@@ -1,6 +1,7 @@
 using InvoiceApi.Data;
 using InvoiceApi.Security;
 using InvoiceApi.Services;
+using InvoiceApi.Settings;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -30,8 +31,9 @@ namespace InvoiceApi
             services.AddScoped<IInvoiceService, InvoiceService>();
             services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<ITokenService, TokenService>();
 
-
+            services.Configure<JwtSettings>(Configuration.GetSection(JwtSettings.SectionName));
 
             services.AddSwaggerGen();
 
@@ -52,6 +54,8 @@ namespace InvoiceApi
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 
