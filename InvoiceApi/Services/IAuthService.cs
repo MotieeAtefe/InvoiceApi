@@ -1,5 +1,4 @@
 ﻿using InvoiceApi.Dtos;
-using InvoiceApi.Models;
 using InvoiceApi.Results;
 using System.Threading.Tasks;
 

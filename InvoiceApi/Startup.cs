@@ -2,13 +2,16 @@ using InvoiceApi.Data;
 using InvoiceApi.Security;
 using InvoiceApi.Services;
 using InvoiceApi.Settings;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.OpenApi.Models;
 
 namespace InvoiceApi
 {
@@ -35,8 +38,53 @@ namespace InvoiceApi
 
             services.Configure<JwtSettings>(Configuration.GetSection(JwtSettings.SectionName));
 
-            services.AddSwaggerGen();
+            var bytesOutput = Encoding.UTF8.GetBytes(
+                Configuration["JwtSettings:SecretKey"]);
 
+            var secret = new SymmetricSecurityKey(bytesOutput);
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(jwtOptions =>
+                {
+
+                    jwtOptions.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateAudience = true,
+                        ValidAudience = Configuration["JwtSettings:Audience"],
+                        ValidateIssuer = true,
+                        ValidIssuer = Configuration["JwtSettings:Issuer"],
+                        ValidateIssuerSigningKey = true,
+                        ValidateLifetime = true,
+                        IssuerSigningKey = secret
+                    };
+                });
+
+            services.AddSwaggerGen(options =>
+            {
+                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "Bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "Enter JWT Bearer token"
+                });
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new string[] { }
+                    }
+                });
+
+            });
             services.AddHttpContextAccessor();
             services.AddControllers();
         }

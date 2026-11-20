@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace InvoiceApi.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class InvoiceController : ControllerBase
