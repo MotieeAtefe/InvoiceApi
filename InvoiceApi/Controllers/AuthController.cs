@@ -5,6 +5,7 @@ using InvoiceApi.Services;
 
 namespace InvoiceApi.Controllers
 {
+    [ApiController]
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
@@ -34,7 +35,6 @@ namespace InvoiceApi.Controllers
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
 
-            if (!ModelState.IsValid) return BadRequest(ModelState);
             var registerResult = await _authService.Register(dto);
 
             if (!registerResult.IsSuccess)
