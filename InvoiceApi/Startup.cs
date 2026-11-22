@@ -10,8 +10,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using Microsoft.OpenApi.Models;
+using Microsoft.Extensions.Options;
+using MongoDB.Driver;
+using System.Text;
 
 namespace InvoiceApi
 {
@@ -36,6 +38,16 @@ namespace InvoiceApi
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ITokenService, TokenService>();
 
+        
+            services.AddSingleton<IMongoClient>(serviceProvider =>
+            {
+                var settings = serviceProvider
+                    .GetRequiredService<IOptions<MongoSettings>>()
+                    .Value;
+
+                return new MongoClient(settings.ConnectionString);
+            });
+            services.Configure<MongoSettings>(Configuration.GetSection("MongoSettings"));
             services.Configure<JwtSettings>(Configuration.GetSection(JwtSettings.SectionName));
 
             var bytesOutput = Encoding.UTF8.GetBytes(
