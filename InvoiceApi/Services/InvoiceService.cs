@@ -1,4 +1,6 @@
-﻿using InvoiceApi.Data;
+﻿using InvoiceApi.Audit.Model;
+using InvoiceApi.Audit.Services;
+using InvoiceApi.Data;
 using InvoiceApi.Dtos;
 using InvoiceApi.Models;
 using Microsoft.AspNetCore.Http;
@@ -7,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using InvoiceApi.Audit.Enums;
 
 namespace InvoiceApi.Services
 {
@@ -14,10 +17,18 @@ namespace InvoiceApi.Services
     {
         private readonly AppDbContext _appDbContext;
         private readonly IHttpContextAccessor _contextAccessor;
-        public InvoiceService(AppDbContext appDbContext, IHttpContextAccessor contextAccessor)
+        private readonly IInvoiceAuditService _auditChange;
+
+
+        public InvoiceService(AppDbContext appDbContext, 
+            IHttpContextAccessor contextAccessor,
+            IInvoiceAuditService auditChange
+
+            )
         {
             _appDbContext = appDbContext;
             _contextAccessor = contextAccessor;
+            _auditChange = auditChange;
         }
 
         public async Task<int> CreateAsync(CreateInvoiceDto dto)
@@ -58,6 +69,67 @@ namespace InvoiceApi.Services
             invoice.TotalAmount = invoice.Items.Sum(i => i.Quantity * i.UnitPrice);
             _appDbContext.Invoices.Add(invoice);
             await _appDbContext.SaveChangesAsync();
+
+         
+            var changes = new List<InvoiceAuditChange>
+            {
+                new InvoiceAuditChange
+                {
+                    EntityType = AuditEntityType.Invoice,
+                    EntityId = invoice.Id,
+                    Field = "CustomerName",
+                    OldValue = null,
+                    NewValue = invoice.CustomerName
+                },
+                new InvoiceAuditChange
+                {
+                    EntityType = AuditEntityType.Invoice,
+                    EntityId = invoice.Id,
+                    Field = "TotalAmount",
+                    OldValue = null,
+                    NewValue = invoice.TotalAmount
+                }
+            };
+
+            foreach (var item in invoice.Items)
+            {
+                changes.Add(new InvoiceAuditChange
+                {
+                    EntityType = AuditEntityType.InvoiceItem,
+                    EntityId = item.Id,
+                    Field = "ProductId",
+                    OldValue = null,
+                    NewValue = item.ProductId
+                });
+
+                changes.Add(new InvoiceAuditChange
+                {
+                    EntityType = AuditEntityType.InvoiceItem,
+                    EntityId = item.Id,
+                    Field = "Quantity",
+                    OldValue = null,
+                    NewValue = item.Quantity
+                });
+
+                changes.Add(new InvoiceAuditChange
+                {
+                    EntityType = AuditEntityType.InvoiceItem,
+                    EntityId = item.Id,
+                    Field = "UnitPrice",
+                    OldValue = null,
+                    NewValue = item.UnitPrice
+                });
+            }
+
+            var auditEvent = new InvoiceAuditEvent
+            {
+                InvoiceId = invoice.Id,
+                UserId = userId,
+                OccurredAt = DateTime.UtcNow,
+                Changes = changes
+            };
+
+            await _auditChange.CreateAsync(auditEvent);
             return invoice.Id;
         }
 
