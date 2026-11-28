@@ -1,4 +1,5 @@
-﻿using InvoiceApi.Dtos;
+﻿#nullable enable
+using InvoiceApi.Dtos;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
