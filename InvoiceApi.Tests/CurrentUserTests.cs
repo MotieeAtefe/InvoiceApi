@@ -7,6 +7,7 @@ using Xunit;
 
 namespace InvoiceApi.Tests
 {
+    [Trait("Category", "Unit")]
     public class CurrentUserTests
     {
         private readonly HttpContextAccessor _httpContext;
