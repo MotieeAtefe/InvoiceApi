@@ -1,4 +1,5 @@
-﻿using InvoiceApi.Data;
+﻿#nullable enable
+using InvoiceApi.Data;
 using InvoiceApi.Dtos;
 using InvoiceApi.Models;
 using Microsoft.AspNetCore.Http;
@@ -13,16 +14,18 @@ namespace InvoiceApi.Services
     public class InvoiceService : IInvoiceService
     {
         private readonly AppDbContext _appDbContext;
-        private readonly IHttpContextAccessor _contextAccessor;
-        public InvoiceService(AppDbContext appDbContext, IHttpContextAccessor contextAccessor)
+        private readonly ICurrentUser _currentUser;
+
+
+        public InvoiceService(AppDbContext appDbContext, ICurrentUser currentUser)
         {
             _appDbContext = appDbContext;
-            _contextAccessor = contextAccessor;
+            _currentUser = currentUser;
         }
 
         public async Task<int> CreateAsync(CreateInvoiceDto dto)
         {
-            var userId = int.Parse(_contextAccessor.HttpContext.User.FindFirst("UserId")?.Value);
+            var userId = _currentUser.GetUserId();
             if (dto.Items == null || !dto.Items.Any())
             {
                 throw new Exception("Invoice must have at least one item");
@@ -62,10 +65,9 @@ namespace InvoiceApi.Services
         }
 
 
-        public async Task<InvoiceDto> GetById(int id)
-        
+        public async Task<InvoiceDto?> GetById(int id)
         {
-            var userId = int.Parse(_contextAccessor.HttpContext.User.FindFirst("UserId")?.Value);
+            var userId = _currentUser.GetUserId();
             return await _appDbContext.Invoices
                 .Where(I => I.Id == id && I.UserId==userId)
                 .Select(I => new InvoiceDto
@@ -89,7 +91,7 @@ namespace InvoiceApi.Services
         }
         public async Task<List<InvoiceDto>> GetAll()
         {
-            var userId = int.Parse(_contextAccessor.HttpContext.User.FindFirst("UserId")?.Value);
+            var userId = _currentUser.GetUserId();
 
             return await _appDbContext.Invoices
                 .Where (I => I.UserId == userId)

@@ -37,8 +37,10 @@ namespace InvoiceApi
             services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<ICurrentUser, CurrentUser>();
 
-        
+
+
             services.AddSingleton<IMongoClient>(serviceProvider =>
             {
                 var settings = serviceProvider
