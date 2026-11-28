@@ -1,3 +1,5 @@
+using InvoiceApi.Audit;
+using InvoiceApi.Audit.Services;
 using InvoiceApi.Data;
 using InvoiceApi.Security;
 using InvoiceApi.Services;
@@ -9,9 +11,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using System.Text;
 
@@ -26,20 +28,22 @@ namespace InvoiceApi
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(
+                    Configuration.GetConnectionString("DefaultConnection")));
 
             services.AddScoped<IProductService, ProductService>();
             services.AddScoped<IInvoiceService, InvoiceService>();
             services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ITokenService, TokenService>();
+
+            services.AddHttpContextAccessor();
             services.AddScoped<ICurrentUser, CurrentUser>();
 
-
+            services.AddScoped<IInvoiceAuditService, InvoiceAuditService>();
 
             services.AddSingleton<IMongoClient>(serviceProvider =>
             {
@@ -49,27 +53,32 @@ namespace InvoiceApi
 
                 return new MongoClient(settings.ConnectionString);
             });
-            services.Configure<MongoSettings>(Configuration.GetSection("MongoSettings"));
-            services.Configure<JwtSettings>(Configuration.GetSection(JwtSettings.SectionName));
+
+            services.Configure<MongoSettings>(
+                Configuration.GetSection("MongoSettings"));
+
+            services.Configure<JwtSettings>(
+                Configuration.GetSection(JwtSettings.SectionName));
 
             var bytesOutput = Encoding.UTF8.GetBytes(
                 Configuration["JwtSettings:SecretKey"]);
 
             var secret = new SymmetricSecurityKey(bytesOutput);
+
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(jwtOptions =>
                 {
-
-                    jwtOptions.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateAudience = true,
-                        ValidAudience = Configuration["JwtSettings:Audience"],
-                        ValidateIssuer = true,
-                        ValidIssuer = Configuration["JwtSettings:Issuer"],
-                        ValidateIssuerSigningKey = true,
-                        ValidateLifetime = true,
-                        IssuerSigningKey = secret
-                    };
+                    jwtOptions.TokenValidationParameters =
+                        new TokenValidationParameters
+                        {
+                            ValidateAudience = true,
+                            ValidAudience = Configuration["JwtSettings:Audience"],
+                            ValidateIssuer = true,
+                            ValidIssuer = Configuration["JwtSettings:Issuer"],
+                            ValidateIssuerSigningKey = true,
+                            ValidateLifetime = true,
+                            IssuerSigningKey = secret
+                        };
                 });
 
             services.AddSwaggerGen(options =>
@@ -83,6 +92,7 @@ namespace InvoiceApi
                     In = ParameterLocation.Header,
                     Description = "Enter JWT Bearer token"
                 });
+
                 options.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
                     {
@@ -97,13 +107,11 @@ namespace InvoiceApi
                         new string[] { }
                     }
                 });
-
             });
-            services.AddHttpContextAccessor();
+
             services.AddControllers();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
